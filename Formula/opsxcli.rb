@@ -1,39 +1,35 @@
-# OpsXCLI Formula for Homebrew
-#
-# Install:
-#   brew tap L00j/tap
-#   brew install opsxcli
-#
-# Update: When a new version is released on GitHub, this formula should be updated
-# with the new tag, revision, and sha256. GoReleaser can automate this via the
-# .goreleaser.yml brews config.
-
 class Opsxcli < Formula
   desc "OpsXCLI - DevOps CLI toolkit with 70+ commands, AI agent, TUI dashboard"
   homepage "https://gitee.com/opsx-tools/opsxcli"
-  url "https://gitee.com/opsx-tools/opsxcli/repository/archive/v1.0.6.tar.gz"
-  sha256 "345647d2b7691452d4916122da806890ea18f3df8e0ffeb9063992a96f3ff842"
-  version "1.0.6"
+  url "https://github.com/L00J/opsxcli/releases/download/v0.9.0/opsxcli_0.9.0_Darwin_arm64.tar.gz"
+  sha256 "4e548bb31c6d37cd7af31ed0105bc62156ce783d77d4c758703e64d8704add42"
+  version "0.9.0"
   license "MIT"
 
-  # Optional: build from HEAD
-  head "https://gitee.com/opsx-tools/opsxcli.git", branch: "master"
-
-  depends_on "go" => :build
+  # Support both Intel and Apple Silicon Macs
+  on_intel do
+    url "https://github.com/L00J/opsxcli/releases/download/v0.9.0/opsxcli_0.9.0_Darwin_x86_64.tar.gz"
+    sha256 "ac2fecb9c26b5474413d81b0cd7970b8a491f652c8a2879787906c2a837ea016"
+  end
 
   def install
-    ldflags = %W[
-      -s -w
-      -X main.version=#{version}
-      -X main.gitCommit=#{Utils.git_head}
-      -X main.buildTime=#{Time.now.utc.iso8601}
-    ]
-    system "go", "build", *std_go_args(ldflags: ldflags)
+    bin.install "opsxcli_darwin_arm64" => "opsxcli" if Hardware::CPU.arm?
+    bin.install "opsxcli_darwin_x86_64" => "opsxcli" if Hardware::CPU.intel?
   end
 
   test do
-    output = shell_output("#{bin}/opsxcli version")
-    # Version output contains version number
-    assert_match(/1\.0\.6/, output)
+    assert_match version.to_s, shell_output("#{bin}/opsxcli --version")
+  end
+
+  def caveats
+    <<~EOS
+      OpsXCLI installed! Quick start:
+        opsxcli              # Launch AI DevOps assistant
+        opsxcli mysql        # MySQL client
+        opsxcli redis        # Redis client
+        opsxcli ssh          # SSH management
+        opsxcli sys          # System monitoring TUI
+        opsxcli --help       # Show all commands
+    EOS
   end
 end
